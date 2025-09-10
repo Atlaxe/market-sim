@@ -1,7 +1,10 @@
 require('dotenv').config()
 const express = require('express')
+const http = require('http')
+const WebSocket = require('ws')
 
 const app = express()
+const server = http.createServer(app)
 
 // middlewares
 // Simply for debugging
@@ -10,7 +13,50 @@ app.use((req, res, next) => {
     next()
 })
 
+// api routes
+app.use('/api/stocks', (req, res) => {
+    res.json({ msg: "Stocks API route hit" });
+});
+
+// WebSocket server
+const wss = new WebSocket.Server({ server });
+
+wss.on('connection', (ws) => {
+    console.log('New WebSocket client connected');
+
+    ws.on('message', (msg) => {
+        console.log('Received:', msg.toString());
+    });
+
+    ws.on('close', () => console.log('Client disconnected'));
+});
+
+const initialOpen = Math.floor(Math.random() * 100) + 50;
+
+setInterval(() => {
+    const base = initialOpen * (1 + (Math.random() * 0.1 - 0.05));
+    const open = base;
+    const close = base + (Math.random() - 0.5) * 10; // ±5
+    const high = Math.max(open, close) + Math.random() * 5; // always >= open/close
+    const low = Math.min(open, close) - Math.random() * 5;  // always <= open/close
+
+    const time = Math.floor(Date.now() / 1000); // UNIX timestamp in seconds
+
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+                type: "priceUpdate",
+                time,
+                open: parseFloat(open.toFixed(2)),
+                high: parseFloat(high.toFixed(2)),
+                low: parseFloat(low.toFixed(2)),
+                close: parseFloat(close.toFixed(2))
+            }));
+        }
+    });
+}, 1000);
+
 // set up server
-app.listen(process.env.PORT, () => {
-    console.log(`Listening on port http://localhost:${process.env.PORT}`)
-})
+server.listen(process.env.PORT, () => {
+    console.log(`Listening on http://localhost:${process.env.PORT}`);
+});

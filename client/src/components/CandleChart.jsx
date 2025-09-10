@@ -1,55 +1,52 @@
-import { AreaSeries, createChart, ColorType  } from "lightweight-charts";
+// CandleChart.jsx
 import React, { useEffect, useRef } from "react";
+import { createChart, ColorType } from "lightweight-charts";
 
-const CandleChart = ( props ) => {
-    const {
-        data,
-        colors: {
-            backgroundColor = '#343434',
-            lineColor = '#2962FF',
-            textColor = 'white',
-            areaTopColor = '#2962FF',
-            areaBottomColor = 'rgba(41, 98, 255, 0.28)',
-        } = {},
-    } = props;
+export default function CandleChart({ data = [], backgroundColor = "#343434", textColor = "white" }) {
+    const containerRef = useRef();
+    const chartRef = useRef();
+    const seriesRef = useRef();
 
-    const chartContainerRef = useRef();
+    // initialize chart + series once
+    useEffect(() => {
+        const chart = createChart(containerRef.current, {
+            layout: {
+                background: { type: ColorType.Solid, color: backgroundColor },
+                textColor,
+            },
+            width: containerRef.current.clientWidth,
+            height: 600,
+            rightPriceScale: { autoScale: true }
+        });
 
-    useEffect(
-        () => {
-            const handleResize = () => {
-                chart.applyOptions({ width: chartContainerRef.current.clientWidth });
-            };
+        const series = chart.addCandlestickSeries();
+        series.setData(data);
 
-            const chart = createChart(chartContainerRef.current, {
-                layout: {
-                    background: { type: ColorType.Solid, color: backgroundColor },
-                    textColor,
-                },
-                width: chartContainerRef.current.clientWidth,
-                height: 300,
-            });
-            chart.timeScale().fitContent();
+        chartRef.current = chart;
+        seriesRef.current = series;
 
-            const newSeries = chart.addSeries(AreaSeries, { lineColor, topColor: areaTopColor, bottomColor: areaBottomColor });
-            newSeries.setData(data);
+        const handleResize = () =>
+        chart.applyOptions({ width: containerRef.current.clientWidth });
 
-            window.addEventListener('resize', handleResize);
+        window.addEventListener("resize", handleResize);
 
-            return () => {
-                window.removeEventListener('resize', handleResize);
+        return () => {
+        window.removeEventListener("resize", handleResize);
+        chart.remove();
+        };
+    }, []);
 
-                chart.remove();
-            };
-        },
-        [data, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]
-    );
+    // update chart when data changes
+    useEffect(() => {
+        if (seriesRef.current && data.length) {
+            const latest = data[data.length - 1];
+            console.log(`Latest info ${latest}`)
+            seriesRef.current.update(latest);
 
-    return (
-        <div
-            ref={chartContainerRef}
-        />
-    );
-}
+            // Refit the chart to make new candle visible
+            // chartRef.current.timeScale().fitContent();
+        }
+    }, [data]);
 
-export default CandleChart
+    return <div ref={containerRef} style={{ width: "100%", height: 600 }} />;
+};
