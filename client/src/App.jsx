@@ -40,10 +40,10 @@ function App(props) {
   }, [])
 
   return (
-    <>
-      <h1>Hello World</h1>
+    <div className='container'>
+      <h1>Sarket Mimulator</h1>
       <CandleChart {...props} data={data}/>
-    </>
+    </div>
   )
 }
 

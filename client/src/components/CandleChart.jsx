@@ -13,13 +13,41 @@ export default function CandleChart({ data = [], backgroundColor = "#343434", te
             layout: {
                 background: { type: ColorType.Solid, color: backgroundColor },
                 textColor,
+                attributionLogo: false
+            },
+            grid: {
+                vertLines: {
+                    color: "rgba(197, 203, 206, 0.5)"  // vertical lines
+                },
+                horzLines: {
+                    color: "rgba(197, 203, 206, 0.5)"  // horizontal lines
+                }
+            },
+            rightPriceScale: {
+                borderVisible: false, 
+                autoScale: true,
+            },
+            leftPriceScale: {
+                borderVisible: false,   
+            },
+            timeScale: {
+                borderVisible: false, 
+                timeVisible: true
             },
             width: containerRef.current.clientWidth,
             height: 600,
-            rightPriceScale: { autoScale: true }
+            
         });
 
-        const series = chart.addCandlestickSeries();
+        const series = chart.addCandlestickSeries({
+            upColor: '#acf3ae',
+            borderUpColor: '#acf3ae',
+            wickUpColor: '#acf3ae',
+            downColor: '#c43d5a',
+            borderDownColor: '#c43d5a',
+            wickDownColor: '#c43d5a'
+            
+        });
         series.setData(data);
 
         chartRef.current = chart;
@@ -31,8 +59,8 @@ export default function CandleChart({ data = [], backgroundColor = "#343434", te
         window.addEventListener("resize", handleResize);
 
         return () => {
-        window.removeEventListener("resize", handleResize);
-        chart.remove();
+            window.removeEventListener("resize", handleResize);
+            chart.remove();
         };
     }, []);
 
@@ -42,11 +70,12 @@ export default function CandleChart({ data = [], backgroundColor = "#343434", te
             const latest = data[data.length - 1];
             console.log(`Latest info ${latest}`)
             seriesRef.current.update(latest);
-
-            // Refit the chart to make new candle visible
-            // chartRef.current.timeScale().fitContent();
         }
     }, [data]);
 
-    return <div ref={containerRef} style={{ width: "100%", height: 600 }} />;
+    return (
+        <div style={{ backgroundColor, padding: 12, borderRadius: 12 }}>
+            <div ref={containerRef} style={{ width: "100%", height: 600, border: 'none' }} />
+        </div>
+    );
 };
