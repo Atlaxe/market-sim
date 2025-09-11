@@ -11,7 +11,6 @@ function App(props) {
 
     ws.current.onopen = () => {
       console.log("Connected to websocket")
-      ws.current.send("Hello from react!");
     }
 
     ws.current.onmessage = (event) => {

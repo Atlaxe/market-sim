@@ -3,20 +3,24 @@ const express = require('express')
 const http = require('http')
 const WebSocket = require('ws')
 
+const stockRoutes = require('./routes/stocks')
+
+// init database
+require('./db/database-init')
+
 const app = express()
 const server = http.createServer(app)
 
 // middlewares
+app.use(express.json())
 // Simply for debugging
 app.use((req, res, next) => {
     console.log(`URL REQUEST : ${req.method} - ${req.path}`);
-    next()
+    next();
 })
 
 // api routes
-app.use('/api/stocks', (req, res) => {
-    res.json({ msg: "Stocks API route hit" });
-});
+app.use('/api/stocks', stockRoutes);
 
 // WebSocket server
 const wss = new WebSocket.Server({ server });
@@ -33,14 +37,15 @@ wss.on('connection', (ws) => {
 
 const initialOpen = Math.floor(Math.random() * 100) + 50;
 
+// Updating stocks
 setInterval(() => {
     const base = initialOpen * (1 + (Math.random() * 0.1 - 0.05));
     const open = base;
-    const close = base + (Math.random() - 0.5) * 10; // ±5
-    const high = Math.max(open, close) + Math.random() * 5; // always >= open/close
-    const low = Math.min(open, close) - Math.random() * 5;  // always <= open/close
+    const close = base + (Math.random() - 0.5) * 10; 
+    const high = Math.max(open, close) + Math.random() * 5; 
+    const low = Math.min(open, close) - Math.random() * 5;  
 
-    const time = Math.floor(Date.now() / 1000); // UNIX timestamp in seconds
+    const time = Math.floor(Date.now() / 1000);
 
     wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
@@ -55,6 +60,7 @@ setInterval(() => {
         }
     });
 }, 1000);
+
 
 // set up server
 server.listen(process.env.PORT, () => {
